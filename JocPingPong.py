@@ -28,7 +28,7 @@ RAZA_MINGE = 7
 def get_font(size): 
     return pygame.font.Font("C:\Programare/font.ttf", size)
 
-FONT_SCOR = pygame.font.SysFont("comicsans", 30)
+FONT_SCOR = get_font(20)
 SCOR_FINAL = 3
 
 baza = Tk()
@@ -109,13 +109,20 @@ def Baza_date():
     global conn, cursor
     conn = sqlite3.connect("pythontut.db")
     cursor = conn.cursor()
-    cursor.execute("CREATE TABLE IF NOT EXISTS member (mem_id INTEGER NOT NULL PRIMARY KEY  AUTOINCREMENT, username TEXT, password TEXT)")       
+
+    cursor.execute("CREATE TABLE IF NOT EXISTS member (mem_id INTEGER NOT NULL PRIMARY KEY  AUTOINCREMENT, "
+                   "username TEXT, password TEXT, scor_stanga INTEGER DEFAULT 0, scor_dreapta INTEGER DEFAULT 0)")
+
     cursor.execute("SELECT * FROM member WHERE username = 'admin' AND password = 'admin'")
     if cursor.fetchone() is None:
         cursor.execute("INSERT INTO member (username, password) VALUES('admin', 'admin')")
         conn.commit()
     
-'''def vizualizare_db():
+   
+
+
+    
+def vizualizare_db():
     Baza_date() 
     cursor.execute("SELECT * FROM member")
     records = cursor.fetchall()
@@ -126,7 +133,7 @@ def Baza_date():
         print(record)
 
     cursor.close()
-    conn.close()'''
+    conn.close()
 
 def adauga_membru(username, password):
     conn = sqlite3.connect("pythontut.db")
@@ -329,7 +336,7 @@ def pagina_start():
                     sys.exit()
 
 
-def select_culoare():
+def select_culoare(default_value ="Pachetul 1"):
     run = True
     clock = pygame.time.Clock()
     font_large = pygame.font.SysFont("arial.ttf", 40)
@@ -363,7 +370,7 @@ def select_culoare():
                 elif event.key == pygame.K_DOWN:
                     culoare_selectata = color_options[0] if culoare_selectata is None else color_options[(color_options.index(culoare_selectata) + 1) % len(color_options)]
 
-    return culoare_selectata
+    return culoare_selectata if culoare_selectata is not None else default_value
     
 def main():
     pagina_start()
@@ -413,15 +420,19 @@ def main():
             scor_stanga += 1
             minge.reset()
 
-
         w = False
         if scor_stanga > SCOR_FINAL:
            w = True
            text = "Stanga a castigat!"
+           cursor.execute("UPDATE member SET scor_stanga = scor_stanga + 1 WHERE username = ?", (USERNAME.get(),))
+           conn.commit()
+
 
         elif scor_dreapta > SCOR_FINAL:
             w = True
             text = "Dreapta a castigat!"
+            cursor.execute("UPDATE member SET scor_dreapta = scor_dreapta + 1 WHERE username = ?", (USERNAME.get(),))
+            conn.commit()
         if w:
             text1 = get_font(20).render(text, 1,"#b68f40")
             WIN.blit(text1, (LATIME//2 - text1.get_width()//2, INALTIME//2 - text1.get_height()//2))
@@ -434,8 +445,15 @@ def main():
             scor_dreapta = 0
     pygame.quit()
 
+'''def sterge_membru(username):
+    conn = sqlite3.connect("pythontut.db")
+    cursor = conn.cursor()
+    cursor.execute("DELETE FROM member WHERE username = ?", (username,))
+    conn.commit()
+    conn.close()
 
+sterge_membru('pereche1')'''
 if __name__ == '__main__':
-    #adauga_membru("user1","parola1")
-    #vizualizare_db()
+    #adauga_membru("pereche2","parola")
+    vizualizare_db()
     baza.mainloop()
